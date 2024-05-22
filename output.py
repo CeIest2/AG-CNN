@@ -87,6 +87,12 @@ num_correct = 0
 num_total = 0
 examples = 5
 
+# Mapping of class numbers to letters
+class_map = {i: chr(65 + i) for i in range(25)}
+
+# Create subplots
+fig, axs = plt.subplots(2, 3, figsize=(10, 7))
+
 # Disable gradient computation for inference
 with torch.no_grad():
     for idx, data in enumerate(test_loader):
@@ -97,16 +103,25 @@ with torch.no_grad():
         outputs = model(pixels)
         _, predicted = torch.max(outputs.data, 1)
 
-        # Print predicted and actual classes, and show images
-        plt.figure(figsize=(2, 2))
-        plt.imshow(pixels.cpu().squeeze(), cmap='gray')
-        plt.title(f'Predicted: {predicted.item()}, Actual: {labels.item()}')
-        plt.axis('off')
-        plt.show()
+        # Plot the image in the subplot
+        row, col = divmod(idx, 3)
+        ax = axs[row, col]
+        ax.imshow(pixels.cpu().squeeze(), cmap='gray')
+        ax.set_title(f'Predicted: {predicted.item()} ({class_map[predicted.item()]}), Actual: {labels.item()} ({class_map[labels.item()]})')
+        ax.axis('off')
 
         # Update the counters
         num_correct += (predicted == labels).sum().item()
         num_total += labels.size(0)
+
+# Hide any unused subplots
+for i in range(examples, 6):
+    row, col = divmod(i, 3)
+    fig.delaxes(axs[row, col])
+
+# Show the plots
+plt.tight_layout()
+plt.show()
 
 # Calculate the model's accuracy
 accuracy = num_correct / num_total
